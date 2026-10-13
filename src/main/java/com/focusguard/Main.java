@@ -220,6 +220,9 @@ public class Main {
         analyticsPanel = new WeeklyAnalyticsPanel();
         contentPanel.add(analyticsPanel, "Analytics");
 
+        contentPanel.add(new FocusJournalPanel(), "Journal");
+        contentPanel.add(new DataExportPanel(), "Export");
+
         contentPanel.add(new ProfilePanel(), "Profile");
 
         mainFrame.add(sidebar, BorderLayout.WEST);
@@ -319,6 +322,16 @@ public class Main {
                 refreshHistoryPage();
             } else if ("Analytics".equals(page)) {
                 analyticsPanel.refreshAnalytics();
+            } else if ("Journal".equals(page)) {
+                // The journal panel saves entries locally for the signed-in user.
+            } else if ("Export".equals(page)) {
+                // Refresh session rows each time the export page is opened.
+                for (Component component : contentPanel.getComponents()) {
+                    if (component instanceof DataExportPanel
+                            && "Export".equals(page)) {
+                        ((DataExportPanel) component).refreshSessions();
+                    }
+                }
             }
 
             cardLayout.show(contentPanel, page);
@@ -375,6 +388,10 @@ public class Main {
         sidebar.add(createNavButton("↺   Focus History", "History"));
         sidebar.add(Box.createVerticalStrut(7));
         sidebar.add(createNavButton("▥   Weekly Analytics", "Analytics"));
+        sidebar.add(Box.createVerticalStrut(7));
+        sidebar.add(createNavButton("✎   Focus Journal", "Journal"));
+        sidebar.add(Box.createVerticalStrut(7));
+        sidebar.add(createNavButton("⇩   Data Export", "Export"));
         sidebar.add(Box.createVerticalStrut(7));
         sidebar.add(createNavButton("☺   My Profile", "Profile"));
         sidebar.add(Box.createVerticalGlue());
