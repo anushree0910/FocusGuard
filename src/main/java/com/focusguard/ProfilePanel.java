@@ -75,10 +75,11 @@ public class ProfilePanel extends JPanel {
         loadData();
 
         // CardLayout shows this panel when the Profile nav button is clicked:
-        // refresh the data then, but not more often than every 60 seconds.
+        // refresh the data then, with a short cooldown to avoid re-querying on
+        // rapid tab switching. The banner Refresh button bypasses this entirely.
         addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override public void componentShown(java.awt.event.ComponentEvent e) {
-                if (System.currentTimeMillis() - lastLoadMillis > 60_000) {
+                if (System.currentTimeMillis() - lastLoadMillis > 15_000) {
                     loadData();
                 }
             }
@@ -200,13 +201,33 @@ public class ProfilePanel extends JPanel {
         JLabel email = new JLabel("Your focus journey, tasks and account activity");
         email.setFont(new Font("SansSerif", Font.PLAIN, 13)); email.setForeground(new Color(245, 240, 255));
         details.add(name); details.add(Box.createVerticalStrut(7)); details.add(email);
-        banner.add(avatar, BorderLayout.WEST); banner.add(details, BorderLayout.CENTER);
+        JButton refresh = new JButton("↻  Refresh");
+        refresh.setFont(new Font("SansSerif", Font.BOLD, 13));
+        refresh.setForeground(PURPLE);
+        refresh.setBackground(Color.WHITE);
+        refresh.setFocusPainted(false);
+        refresh.setBorderPainted(false);
+        refresh.setOpaque(true);
+        refresh.setBorder(new EmptyBorder(12, 18, 12, 18));
+        refresh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        refresh.addActionListener(e -> loadData());
+        JPanel refreshBox = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        refreshBox.setOpaque(false);
+        refreshBox.add(refresh);
+        banner.add(avatar, BorderLayout.WEST);
+        banner.add(details, BorderLayout.CENTER);
+        banner.add(refreshBox, BorderLayout.EAST);
         banner.setPreferredSize(new Dimension(700, 132));
         return banner;
     }
 
     private JScrollPane scrollable(JPanel panel) {
-        JScrollPane scroll = new JScrollPane(panel);
+        // Pin the page to the top: inside a viewport, BoxLayout would otherwise
+        // stretch holders with unbounded maximum height and leave empty gaps.
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.add(panel, BorderLayout.NORTH);
+        JScrollPane scroll = new JScrollPane(wrapper);
         scroll.setBorder(null); scroll.getViewport().setBackground(BG);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         return scroll;
@@ -330,6 +351,7 @@ public class ProfilePanel extends JPanel {
             sessionCount++;
         }
 
+        grid.setPreferredSize(new Dimension(900, 116));
         grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 116));
         card.add(grid);
         card.add(Box.createVerticalStrut(10));
@@ -380,13 +402,13 @@ public class ProfilePanel extends JPanel {
 
         JPanel stats = new JPanel(new GridLayout(3, 2, 12, 12));
         stats.setOpaque(false);
-        stats.setMaximumSize(new Dimension(Integer.MAX_VALUE, 168));
         stats.add(statTile(String.valueOf(completed.size()), "sessions completed"));
         stats.add(statTile(formatMinutes(totalMinutes), "total focus time"));
         stats.add(statTile(weekSessions == 0 ? "—" : formatMinutes(weekMinutes), "focused this week"));
         stats.add(statTile(longest == 0 ? "—" : formatMinutes(longest), "longest session"));
         stats.add(statTile(String.valueOf(d.completedTasks()), "tasks completed"));
         stats.add(statTile(d.currentStreak() + (d.currentStreak() == 1 ? " day" : " days"), "current focus streak"));
+        fitHeight(stats);
 
         RoundedPanel card = card(20);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -455,10 +477,10 @@ public class ProfilePanel extends JPanel {
 
         JPanel counts = new JPanel(new GridLayout(1, 3, 12, 0));
         counts.setOpaque(false);
-        counts.setMaximumSize(new Dimension(Integer.MAX_VALUE, 66));
         counts.add(statTile(String.valueOf(completed), "completed"));
         counts.add(statTile(String.valueOf(pending.size()), "pending"));
         counts.add(statTile(String.valueOf(overdue.size()), "overdue"));
+        fitHeight(counts);
         summary.add(counts);
         summary.add(Box.createVerticalStrut(14));
 
@@ -540,14 +562,14 @@ public class ProfilePanel extends JPanel {
         JPanel grid = new JPanel(new GridLayout(0, 2, 12, 12));
         grid.setOpaque(false);
         for (Badge b : badges) grid.add(badgeTile(b));
-        setContent(achievementsHolder, card, gridWrap(grid, badges.length));
+        setContent(achievementsHolder, card, gridWrap(grid));
     }
 
-    private JPanel gridWrap(JPanel grid, int entries) {
+    private JPanel gridWrap(JPanel grid) {
         RoundedPanel card = card(20);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(innerBorder(20, 22, 20, 22));
-        grid.setMaximumSize(new Dimension(Integer.MAX_VALUE, ((entries + 1) / 2) * 92 + 12));
+        fitHeight(grid);
         card.add(grid);
         return card;
     }
@@ -618,6 +640,11 @@ public class ProfilePanel extends JPanel {
         row.add(when, BorderLayout.EAST);
         row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER));
         return row;
+    }
+
+    /** Let a BoxLayout child keep its natural height instead of being clipped by a fixed cap. */
+    private static void fitHeight(JComponent c) {
+        c.setMaximumSize(new Dimension(Integer.MAX_VALUE, c.getPreferredSize().height));
     }
 
     private static Color cellColor(int minutes) {
