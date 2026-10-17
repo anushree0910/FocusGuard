@@ -222,6 +222,7 @@ public class Main {
 
         contentPanel.add(new FocusJournalPanel(), "Journal");
         contentPanel.add(new DataExportPanel(), "Export");
+        contentPanel.add(new DbInsightsPanel(), "Insights");
 
         contentPanel.add(new ProfilePanel(), "Profile");
 
@@ -332,6 +333,12 @@ public class Main {
                         ((DataExportPanel) component).refreshSessions();
                     }
                 }
+            }else if ("Insights".equals(page)) {
+                for (Component component : contentPanel.getComponents()) {
+                    if (component instanceof DbInsightsPanel) {
+                        ((DbInsightsPanel) component).refreshAll();
+                    }
+                }
             }
 
             cardLayout.show(contentPanel, page);
@@ -392,6 +399,8 @@ public class Main {
         sidebar.add(createNavButton("✎   Focus Journal", "Journal"));
         sidebar.add(Box.createVerticalStrut(7));
         sidebar.add(createNavButton("⇩   Data Export", "Export"));
+        sidebar.add(Box.createVerticalStrut(7));
+        sidebar.add(createNavButton("◈   DB Insights", "Insights"));
         sidebar.add(Box.createVerticalStrut(7));
         sidebar.add(createNavButton("☺   My Profile", "Profile"));
         sidebar.add(Box.createVerticalGlue());

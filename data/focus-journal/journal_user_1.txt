@@ -8,3 +8,15 @@ Date: 2026-10-13 12:51:43
 Title: Anushree
 Testing 1234
 
+========================================
+Date: 2026-10-14 11:57:02
+Title: dbms
+What did I work on?
+joins , triggers 
+
+What went well?
+triggers
+
+What should I focus on next?
+joins
+
